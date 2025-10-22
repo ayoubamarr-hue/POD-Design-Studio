@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { Metadata, InspirationAnalysis, PrintReport } from '../types';
 
 // Declarations for libraries loaded via CDN
@@ -211,65 +211,76 @@ An analysis of the target audience and why the design is marketable.`;
     return response.text;
 }
 
-// --- Clipdrop API Calls ---
+// --- Image Editing API Calls ---
 
 export async function removeBackground(imageUrl: string): Promise<Blob> {
-    const apiKey = process.env.CLIPDROP_API_KEY as string;
-    if (!apiKey) {
-        throw new Error("Clipdrop API key not configured. Please set the CLIPDROP_API_KEY environment variable.");
-    }
+    const apiKey = 'f5b40dda9489f6fa85eb2e7e103e9bab84d0d765226b6f8ef264bb98bfddc5eabfefa52ad4005191d1bd590f7032fc94';
 
-    const response = await fetch(imageUrl);
-    const imageBlob = await response.blob();
-    
+    const imageResponse = await fetch(imageUrl);
+    const imageBlob = await imageResponse.blob();
+
     const formData = new FormData();
-    formData.append('image_file', imageBlob);
+    formData.append('image_file', imageBlob, 'image.png');
 
-    const apiResponse = await fetch('https://clipdrop-api.co/remove-background/v1', {
+    const response = await fetch('https://clipdrop-api.co/remove-background/v1', {
         method: 'POST',
-        headers: { 'x-api-key': apiKey },
+        headers: {
+            'x-api-key': apiKey,
+        },
         body: formData,
     });
 
-    if (!apiResponse.ok) {
-        const errorText = await apiResponse.text();
-        throw new Error(`Clipdrop BG Removal failed: ${errorText}`);
+    if (!response.ok) {
+        try {
+            const errorData = await response.json();
+            throw new Error(`Clipdrop API Error: ${errorData.error || response.statusText}`);
+        } catch (e) {
+            throw new Error(`Clipdrop API Error: ${response.status} ${response.statusText}`);
+        }
     }
-    return apiResponse.blob();
+    return response.blob();
 }
 
+
 export async function upscaleImage(imageUrl: string): Promise<Blob> {
-    const apiKey = process.env.CLIPDROP_API_KEY as string;
-    if (!apiKey) {
-        throw new Error("Clipdrop API key not configured. Please set the CLIPDROP_API_KEY environment variable.");
+    const parts = imageUrl.split(',');
+    const mimeType = parts[0].match(/:(.*?);/)?.[1] || 'image/png';
+    const base64Data = parts[1];
+
+    if (!base64Data) {
+        throw new Error("Invalid image URL for upscaling.");
     }
-    
-    const img = new Image();
-    img.src = imageUrl;
-    await new Promise(resolve => (img.onload = resolve));
-    
-    const targetWidth = img.naturalWidth * 2;
-    const targetHeight = img.naturalHeight * 2;
 
-    const response = await fetch(imageUrl);
-    const imageBlob = await response.blob();
-    
-    const formData = new FormData();
-    formData.append('image_file', imageBlob);
-    formData.append('target_width', String(targetWidth));
-    formData.append('target_height', String(targetHeight));
-
-    const apiResponse = await fetch('https://clipdrop-api.co/image-upscaling/v1/upscale', {
-        method: 'POST',
-        headers: { 'x-api-key': apiKey },
-        body: formData,
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              data: base64Data,
+              mimeType: mimeType,
+            },
+          },
+          {
+            text: 'Upscale this image, doubling its resolution. Enhance details, sharpen edges, and improve overall clarity without adding, removing, or changing any elements in the original composition. The output must be a high-quality, upscaled version of the provided image.',
+          },
+        ],
+      },
+      config: {
+          responseModalities: [Modality.IMAGE],
+      },
     });
 
-     if (!apiResponse.ok) {
-        const errorText = await apiResponse.text();
-        throw new Error(`Clipdrop Upscale failed: ${errorText}`);
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData) {
+        const base64ImageBytes: string = part.inlineData.data;
+        const newImageUrl = `data:image/png;base64,${base64ImageBytes}`;
+        const fetchResponse = await fetch(newImageUrl);
+        return fetchResponse.blob();
+      }
     }
-    return apiResponse.blob();
+    
+    throw new Error("AI could not process the image for upscaling.");
 }
 
 

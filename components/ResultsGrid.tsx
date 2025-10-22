@@ -44,8 +44,22 @@ const DesignCard: React.FC<DesignCardProps> = ({ design, onRemoveBackground, onU
         )}
       </div>
       <div className="grid grid-cols-5 gap-2">
-        <button onClick={() => handleAction(onRemoveBackground, 'Removing BG...')} className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 px-1 rounded-md transition disabled:opacity-50" disabled={isProcessing}>BG</button>
-        <button onClick={() => handleAction(onUpscale, 'Upscaling...')} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-1 rounded-md transition disabled:opacity-50" disabled={isProcessing}>2x</button>
+        <button 
+          onClick={() => handleAction(onRemoveBackground, 'Removing BG...')} 
+          className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 px-1 rounded-md transition disabled:opacity-50" 
+          disabled={isProcessing}
+          title="Remove Background"
+        >
+          BG
+        </button>
+        <button 
+          onClick={() => handleAction(onUpscale, 'Upscaling...')} 
+          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-1 rounded-md transition disabled:opacity-50" 
+          disabled={isProcessing}
+          title="Upscale 2x"
+        >
+          2x
+        </button>
         <button onClick={() => handleAction(onRemix, 'Remixing...')} className="bg-lime-600 hover:bg-lime-700 text-white text-xs font-bold py-2 px-1 rounded-md transition disabled:opacity-50" disabled={isProcessing}>Remix</button>
         <button onClick={onRevert} className="bg-gray-600 hover:bg-gray-500 text-white text-xs font-bold py-2 px-1 rounded-md transition disabled:opacity-50" disabled={isProcessing}>Revert</button>
         <button onClick={onDownload} className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-1 rounded-md transition disabled:opacity-50" disabled={isProcessing}>Save</button>
