@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { DesignData, Message, AnalysisResult, PrintReport } from './types';
 import * as api from './services/apiService';
 import ResultsGrid from './components/ResultsGrid';
@@ -22,6 +22,7 @@ const App: React.FC = () => {
     const [modalContent, setModalContent] = useState('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult>({ printReport: null, inspiration: null, uploadedImage: null });
+    const completedCountRef = useRef(0);
 
     useEffect(() => {
         try {
@@ -82,21 +83,34 @@ const App: React.FC = () => {
             showMessage("Please enter at least one design idea.", true);
             return;
         }
-
+    
         setIsLoading(true);
         setMessage(null);
         setGeneratedDesigns([]);
-
-        const newDesigns: DesignData[] = [];
-        for (let i = 0; i < ideas.length; i++) {
-            setLoadingMessage(`Generating design ${i + 1} of ${ideas.length}: "${ideas[i]}"`);
-            const design = await generateSingleDesign(ideas[i]);
-            if (design) {
-                newDesigns.push(design);
-                setGeneratedDesigns([...newDesigns]);
-            }
-        }
+        completedCountRef.current = 0;
+    
+        setLoadingMessage(`Starting generation for ${ideas.length} designs...`);
+    
+        const generationPromises = ideas.map(idea =>
+            generateSingleDesign(idea)
+                .then(design => {
+                    if (design) {
+                        completedCountRef.current += 1;
+                        setLoadingMessage(`Generated ${completedCountRef.current} of ${ideas.length} designs...`);
+                        // Functional update is crucial for concurrent state updates
+                        setGeneratedDesigns(prev => [...prev, design]);
+                    }
+                })
+                .catch(error => {
+                    console.error(`Failed to generate for "${idea}":`, error);
+                    showMessage(`Failed to generate design for "${idea}".`, true);
+                })
+        );
+    
+        await Promise.all(generationPromises);
+    
         setIsLoading(false);
+        showMessage(`Bulk generation complete. ${completedCountRef.current} of ${ideas.length} successful.`, false);
     };
 
     const updateDesign = (id: string, updates: Partial<DesignData>) => {
@@ -200,9 +214,7 @@ const App: React.FC = () => {
                 },
                 ...printResponse
             };
-
             setAnalysisResult({ printReport: finalReport, inspiration: inspirationResponse, uploadedImage: imageUrl });
-
         } catch (error) {
             showMessage(error instanceof Error ? error.message : "Analysis failed.", true);
         } finally {
