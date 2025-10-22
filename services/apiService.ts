@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Metadata, InspirationAnalysis, PrintReport } from '../types';
 
@@ -214,7 +213,12 @@ An analysis of the target audience and why the design is marketable.`;
 
 // --- Clipdrop API Calls ---
 
-export async function removeBackground(apiKey: string, imageUrl: string): Promise<Blob> {
+export async function removeBackground(imageUrl: string): Promise<Blob> {
+    const apiKey = process.env.CLIPDROP_API_KEY as string;
+    if (!apiKey) {
+        throw new Error("Clipdrop API key not configured. Please set the CLIPDROP_API_KEY environment variable.");
+    }
+
     const response = await fetch(imageUrl);
     const imageBlob = await response.blob();
     
@@ -234,10 +238,15 @@ export async function removeBackground(apiKey: string, imageUrl: string): Promis
     return apiResponse.blob();
 }
 
-export async function upscaleImage(apiKey: string, imageUrl: string): Promise<Blob> {
+export async function upscaleImage(imageUrl: string): Promise<Blob> {
+    const apiKey = process.env.CLIPDROP_API_KEY as string;
+    if (!apiKey) {
+        throw new Error("Clipdrop API key not configured. Please set the CLIPDROP_API_KEY environment variable.");
+    }
+    
     const img = new Image();
     img.src = imageUrl;
-    await new Promise(resolve => img.onload = resolve);
+    await new Promise(resolve => (img.onload = resolve));
     
     const targetWidth = img.naturalWidth * 2;
     const targetHeight = img.naturalHeight * 2;

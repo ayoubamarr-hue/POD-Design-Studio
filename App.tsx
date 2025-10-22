@@ -5,7 +5,6 @@ import ResultsGrid from './components/ResultsGrid';
 import UploadAnalysis from './components/UploadAnalysis';
 
 const App: React.FC = () => {
-    const [clipdropApiKey, setClipdropApiKey] = useState('17617ba99327ac2cfd64ee4ee6c90cdbc2f979a89ab90a763ce6c1264f6bee922bea70590c35c139dc1b591104ec0c70');
     const [ideaPrompt, setIdeaPrompt] = useState('');
     const [generatedDesigns, setGeneratedDesigns] = useState<DesignData[]>(() => {
         try {
@@ -114,13 +113,11 @@ const App: React.FC = () => {
     };
 
     const handleRemoveBackground = async (id: string) => {
-        const key = clipdropApiKey.trim();
-        if (!key) { showMessage("Please enter your Clipdrop API key.", true); return; }
         const design = generatedDesigns.find(d => d.id === id);
         if (!design || design.bgRemoved) return;
         
         try {
-            const blob = await api.removeBackground(key, design.imageUrl);
+            const blob = await api.removeBackground(design.imageUrl);
             const newImageUrl = await blobToDataUrl(blob);
             updateDesign(id, { imageUrl: newImageUrl, bgRemoved: true });
             showMessage(`Background removed for design #${generatedDesigns.findIndex(d => d.id === id) + 1}!`);
@@ -130,13 +127,11 @@ const App: React.FC = () => {
     };
 
     const handleUpscale = async (id: string) => {
-        const key = clipdropApiKey.trim();
-        if (!key) { showMessage("Please enter your Clipdrop API key.", true); return; }
         const design = generatedDesigns.find(d => d.id === id);
         if (!design || design.upscaled) return;
 
         try {
-            const blob = await api.upscaleImage(key, design.imageUrl);
+            const blob = await api.upscaleImage(design.imageUrl);
             const newImageUrl = await blobToDataUrl(blob);
             updateDesign(id, { imageUrl: newImageUrl, upscaled: true });
             showMessage(`Design #${generatedDesigns.findIndex(d => d.id === id) + 1} upscaled!`);
@@ -188,7 +183,7 @@ const App: React.FC = () => {
 
             const image = new Image();
             image.src = imageUrl;
-            await new Promise(resolve => image.onload = resolve);
+            await new Promise(resolve => (image.onload = resolve));
             const { naturalWidth, naturalHeight } = image;
 
             const [inspirationResponse, printResponse] = await Promise.all([
@@ -278,12 +273,6 @@ const App: React.FC = () => {
                         <h1 className="text-4xl md:text-5xl font-bold text-gray-100">POD Design Studio</h1>
                         <p className="text-gray-400 mt-2">Generate, upscale, and prepare print-ready designs for TeePublic.</p>
                     </header>
-
-                    <div className="mb-6 bg-gray-700/50 p-4 rounded-lg">
-                        <label htmlFor="clipdrop-api-key" className="block text-sm font-medium text-gray-300 mb-2">Clipdrop API Key (for Upscaling & BG Removal)</label>
-                        <input type="text" id="clipdrop-api-key" value={clipdropApiKey} onChange={e => setClipdropApiKey(e.target.value)} className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Enter your Clipdrop API key here" />
-                        <p className="text-xs text-gray-500 mt-2">Get your free key from clipdrop.co/apis</p>
-                    </div>
 
                     <div className="mb-6">
                         <label htmlFor="idea-prompt" className="block text-sm font-medium text-gray-300 mb-2">Enter your design ideas (one per line):</label>
