@@ -1,0 +1,5 @@
+{
+  "name": "POD Design Studio",
+  "description": "An AI-powered application to generate, upscale, and prepare print-ready designs for Print-on-Demand platforms like TeePublic. Features include bulk generation, niche research, and print-readiness analysis.",
+  "requestFramePermissions": []
+}
