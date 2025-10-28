@@ -15,9 +15,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // FIX: Use process.env.API_KEY as per the guidelines.
-    const apiKey = process.env.API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-        return res.status(500).json({ error: 'API key not configured on the server. Please set the API_KEY environment variable.' });
+        return res.status(500).json({ error: 'API key not configured on the server. Please set the GEMINI_API_KEY environment variable.' });
     }
     const ai = new GoogleGenAI({ apiKey });
 
@@ -52,11 +52,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                                 "metadata": {
                                     type: Type.OBJECT,
                                     properties: { "Title": { type: Type.STRING }, "Description": { type: Type.STRING }, "Tags": { type: Type.STRING }, "Type": { type: Type.STRING }, "Color": { type: Type.STRING } },
-                                    // FIX: Add required fields for robustness
                                     required: ["Title", "Description", "Tags", "Type", "Color"]
                                 }
                             },
-                             // FIX: Add required fields for robustness
                             required: ["image_prompt", "metadata"]
                         }
                     }
