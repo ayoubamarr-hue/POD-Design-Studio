@@ -1,6 +1,7 @@
-
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import FormData from 'form-data';
+// FIX: Import `Buffer` from the 'buffer' module to resolve the 'Cannot find name `Buffer`' TypeScript error.
+import { Buffer } from 'buffer';
 
 const dataUrlToBuffer = (dataUrl: string) => {
     const base64 = dataUrl.split(',')[1];
@@ -34,7 +35,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 'x-api-key': clipdropApiKey,
                 ...formData.getHeaders(),
             },
-            body: formData,
+            // FIX: Cast `formData` to `any` to resolve a type mismatch.
+            // The `form-data` object is a stream-like object that `fetch` in Node.js can handle,
+            // but its type is not directly compatible with the `BodyInit` type expected by TypeScript.
+            body: formData as any,
         });
 
         if (!clipdropResponse.ok) {

@@ -3,6 +3,7 @@ import { DesignData, Message, AnalysisResult, PrintReport } from './types';
 import * as api from './services/apiService';
 import ResultsGrid from './components/ResultsGrid';
 import UploadAnalysis from './components/UploadAnalysis';
+import ImageEditor from './components/ImageEditor';
 
 const App: React.FC = () => {
     const [ideaPrompt, setIdeaPrompt] = useState('');
@@ -22,7 +23,10 @@ const App: React.FC = () => {
     const [modalContent, setModalContent] = useState('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult>({ printReport: null, inspiration: null, uploadedImage: null });
+    const [editingDesignId, setEditingDesignId] = useState<string | null>(null);
     const completedCountRef = useRef(0);
+
+    const editingDesign = generatedDesigns.find(d => d.id === editingDesignId) || null;
 
     useEffect(() => {
         try {
@@ -255,6 +259,14 @@ const App: React.FC = () => {
         }
     };
     
+    const handleSaveEdits = (newImageUrl: string) => {
+        if (editingDesignId) {
+            updateDesign(editingDesignId, { imageUrl: newImageUrl });
+            showMessage('Design updated successfully!');
+        }
+        setEditingDesignId(null);
+    };
+
     const NicheResearchModal = () => {
         if (!isModalOpen) return null;
         let htmlContent = modalContent
@@ -307,7 +319,7 @@ const App: React.FC = () => {
                         </div>
                     )}
                     
-                    {!isLoading && <ResultsGrid designs={generatedDesigns} onRemoveBackground={handleRemoveBackground} onUpscale={handleUpscale} onRemix={handleRemix} onRevert={handleRevert} onDownloadAll={() => api.downloadAllImagesAsZip(generatedDesigns)} onDownloadMetadata={() => api.downloadMetadataAsXLSX(generatedDesigns)} onClearSession={handleClearSession} />}
+                    {!isLoading && <ResultsGrid designs={generatedDesigns} onRemoveBackground={handleRemoveBackground} onUpscale={handleUpscale} onRemix={handleRemix} onRevert={handleRevert} onEdit={setEditingDesignId} onDownloadAll={() => api.downloadAllImagesAsZip(generatedDesigns)} onDownloadMetadata={() => api.downloadMetadataAsXLSX(generatedDesigns)} onClearSession={handleClearSession} />}
                 </div>
                 {message && (
                     <div className={`mt-4 px-4 py-3 rounded-lg relative fade-in ${message.isError ? 'bg-red-800/50 border border-red-600 text-red-300' : 'bg-blue-800/50 border border-blue-600 text-blue-300'}`} role="alert">
@@ -316,6 +328,13 @@ const App: React.FC = () => {
                 )}
             </div>
             <NicheResearchModal />
+            {editingDesign && (
+                <ImageEditor 
+                    design={editingDesign}
+                    onSave={handleSaveEdits}
+                    onClose={() => setEditingDesignId(null)}
+                />
+            )}
         </div>
     );
 };

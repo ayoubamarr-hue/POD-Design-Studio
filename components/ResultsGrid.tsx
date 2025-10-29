@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { DesignData } from '../types';
+import { EditIcon } from './icons';
 
 interface DesignCardProps {
   design: DesignData;
@@ -8,9 +9,10 @@ interface DesignCardProps {
   onRemix: () => Promise<void>;
   onRevert: () => void;
   onDownload: () => void;
+  onEdit: () => void;
 }
 
-const DesignCard: React.FC<DesignCardProps> = ({ design, onRemoveBackground, onUpscale, onRemix, onRevert, onDownload }) => {
+const DesignCard: React.FC<DesignCardProps> = ({ design, onRemoveBackground, onUpscale, onRemix, onRevert, onDownload, onEdit }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingText, setProcessingText] = useState('');
 
@@ -43,7 +45,7 @@ const DesignCard: React.FC<DesignCardProps> = ({ design, onRemoveBackground, onU
             </div>
         )}
       </div>
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <button 
           onClick={() => handleAction(onRemoveBackground, 'Removing BG...')} 
           className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 px-1 rounded-md transition disabled:opacity-50" 
@@ -60,6 +62,9 @@ const DesignCard: React.FC<DesignCardProps> = ({ design, onRemoveBackground, onU
         >
           2x
         </button>
+         <button onClick={onEdit} className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-bold py-2 px-1 rounded-md transition disabled:opacity-50 flex items-center justify-center" disabled={isProcessing} title="Edit Design">
+          <EditIcon />
+        </button>
         <button onClick={() => handleAction(onRemix, 'Remixing...')} className="bg-lime-600 hover:bg-lime-700 text-white text-xs font-bold py-2 px-1 rounded-md transition disabled:opacity-50" disabled={isProcessing}>Remix</button>
         <button onClick={onRevert} className="bg-gray-600 hover:bg-gray-500 text-white text-xs font-bold py-2 px-1 rounded-md transition disabled:opacity-50" disabled={isProcessing}>Revert</button>
         <button onClick={onDownload} className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-1 rounded-md transition disabled:opacity-50" disabled={isProcessing}>Save</button>
@@ -75,12 +80,13 @@ interface ResultsGridProps {
   onUpscale: (id: string) => Promise<void>;
   onRemix: (id: string) => Promise<void>;
   onRevert: (id: string) => void;
+  onEdit: (id: string) => void;
   onDownloadAll: () => void;
   onDownloadMetadata: () => void;
   onClearSession: () => void;
 }
 
-const ResultsGrid: React.FC<ResultsGridProps> = ({ designs, onRemoveBackground, onUpscale, onRemix, onRevert, onDownloadAll, onDownloadMetadata, onClearSession }) => {
+const ResultsGrid: React.FC<ResultsGridProps> = ({ designs, onRemoveBackground, onUpscale, onRemix, onRevert, onEdit, onDownloadAll, onDownloadMetadata, onClearSession }) => {
     
     const downloadSingleImage = (design: DesignData) => {
         const a = document.createElement('a');
@@ -108,6 +114,7 @@ const ResultsGrid: React.FC<ResultsGridProps> = ({ designs, onRemoveBackground, 
             onUpscale={() => onUpscale(design.id)}
             onRemix={() => onRemix(design.id)}
             onRevert={() => onRevert(design.id)}
+            onEdit={() => onEdit(design.id)}
             onDownload={() => downloadSingleImage(design)}
           />
         ))}

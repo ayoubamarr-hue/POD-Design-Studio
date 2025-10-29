@@ -67,14 +67,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             case 'generateImageFromPrompt': {
                 const { prompt } = payload;
                 if (!prompt) return res.status(400).json({ error: 'Prompt is required.' });
-                const response = await ai.models.generateImages({
-                    model: 'imagen-4.0-generate-001',
-                    prompt: prompt,
-                    config: { numberOfImages: 1, aspectRatio: "3:4" }
+                
+                const response = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash-image',
+                    contents: {
+                        parts: [{ text: prompt }],
+                    },
+                    config: {
+                        responseModalities: [Modality.IMAGE],
+                    },
                 });
-                const base64ImageData = response.generatedImages[0]?.image?.imageBytes;
-                if (!base64ImageData) throw new Error("Could not find image data in Gemini response.");
-                return res.status(200).json({ imageBase64: base64ImageData });
+
+                const resultPart = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+                if (!resultPart?.inlineData?.data) {
+                    throw new Error("Could not find image data in Gemini response.");
+                }
+                
+                return res.status(200).json({ imageBase64: resultPart.inlineData.data });
             }
 
             // FIX: Implemented missing generateContent call for image analysis.
